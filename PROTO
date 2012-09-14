@@ -1,0 +1,28 @@
+
+
+
+Firmware understands these G codes:
+
+    G0      Rapid Move              X Y Z E F
+    G1      Controlled Move         X Y Z E F
+    G2      CW Arc      XYZ E F I J
+    G3      CCW Arc     XYZ E F I J
+    G4      Dwell       P:ms to wait    S:seconds to wait
+    G28     Home Axis
+    G90     Absolute Mode
+    G91     Relative Mode
+    G92     Synchronize
+
+If there are multiple G- or M-codes in a single line, the first G-code found is
+processed;  if the line does not contain a G-code, then the first M-code found
+is processed.  Otherwise, an error is returned.  The first X/Y/Z/... parameter 
+found for each code is used.
+
+In practice, this means that there should only ever be a single G- or M-code
+per line, and that duplicate parameters should not be present.
+
+
+
+RING BUFFER
+
+Sadly, about the best we can do is ... well, nothing.
