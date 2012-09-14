@@ -32,7 +32,7 @@ class repcode(object):
 
     def __getattr__(self, name):
         if len(name) == 1 and 'A' <= name <= 'Z':
-            return self.words[name]
+            return self.words.get(name, None)
         raise AttributeError
                 
     def _parse(self, line):
@@ -98,9 +98,25 @@ class repfile(object):
             yield repcode(line, repfile=self, lineno=idx+1)
 
 
+def tabulate_codes(repfiles):
+    from collections import defaultdict
+    seen_codes = defaultdict(int)
+    for f in repfiles:
+        print('Scanning repcode file "{}"...'.format(f.path))
+        for code in f.codes:
+            assert not (code.G and code.M)
+            if code.G:
+                seen_codes['G{}'.format(code.G)] += 1
+            if code.M:
+                seen_codes['M{}'.format(code.M)] += 1
+    for code, count in sorted(seen_codes.items(), key=lambda i: i[0], reverse=False):
+        print('  {:<5s}  {:d}'.format(code, count))
+
+
 if __name__ == '__main__':
     import sys
-    r = repfile(sys.argv[1])
-    for code in r.codes:
-        print('%04d:  %s' % (code.lineno, code))
+    repfiles = []
+    for path in sys.argv[1:]:
+        repfiles.append(repfile(path))
+    tabulate_codes(repfiles)
 

@@ -13,6 +13,15 @@ Firmware understands these G codes:
     G91     Relative Mode
     G92     Synchronize
 
+    M83     (exceedingly rare?)
+    M84     (exceedingly rare?)
+    M101
+    M103
+    M104    (very rare?)
+    M108
+    M109    (exceedingly rare?)
+    M113
+
 If there are multiple G- or M-codes in a single line, the first G-code found is
 processed;  if the line does not contain a G-code, then the first M-code found
 is processed.  Otherwise, an error is returned.  The first X/Y/Z/... parameter 
