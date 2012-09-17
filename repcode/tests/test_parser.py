@@ -92,6 +92,18 @@ def test_invalid_chars():
     with py.test.raises(ParseError):
         block = parse('G1 X-5 Y:1 Z0')
 
+def test_invalid_whitespace():
+    with py.test.raises(ParseError):
+        block = parse('G92 X +0')
+    with py.test.raises(ParseError):
+        block = parse('G92 X+0 Y 1.23')
+    with py.test.raises(ParseError):
+        block = parse('G92 X+0 Y1 .23')
+    with py.test.raises(ParseError):
+        block = parse('G92 X+0 Y1. 23')
+    with py.test.raises(ParseError):
+        block = parse('G92 X+0 Y1. 23Q1 22 Z0')
+
 def test_invalid_symbol_order():
     with py.test.raises(ParseError):
         block = parse('X5.06-')

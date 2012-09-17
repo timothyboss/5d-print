@@ -23,7 +23,13 @@ def parse(line):
         if line[pos] == ';':
             break
         if line[pos] == ' ':
+            value = line[pos]
             pos += 1
+            while pos < len(line) and line[pos] == ' ':
+                value += line[pos]
+                pos += 1
+            sym = symbol('WS', pos, value)
+            tokens.append(sym)
             continue
         if ('a' <= line[pos] <= 'z') or ('A' <= line[pos] <= 'Z'):
             sym = symbol('CODE', pos, line[pos].upper())
@@ -55,6 +61,9 @@ def parse(line):
     # Parse
     words = {}
     while tokens[0].code != 'EOF':
+        if tokens[0].code == 'WS':
+            tokens.popleft()
+            continue
         if tokens[0].code != 'CODE':
             raise ParseError('Expected CODE token, got %s.' % tokens[0].code)
         word = tokens[0].text
