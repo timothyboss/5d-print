@@ -40,25 +40,38 @@ class repcode(object):
         words = {}
         while tokens[0].symbol != 'EOF':
             if tokens[0].symbol != 'CODE':
-                raise RepcodeParseError('Expected CODE token, got %s.' % tokens[0])
+                raise RepcodeParseError('Expected CODE token, got %s.' % tokens[0].symbol)
             word = tokens[0].text
             tokens.popleft()
             if word in words:
                 raise RepcodeParseError('Duplicate word:  already saw %s' % word)
+            # (optional) sign, '+' or '-'
             sign = ''
             if tokens[0].symbol == 'SIGN':
                 sign = tokens[0].text
                 tokens.popleft()
-            if tokens[0].symbol != 'VALUE':
-                raise RepcodeParseError('Expected VALUE token, got %s.' % tokens[0])
-            value = sign + tokens[0].text
-            tokens.popleft()
-            words[word] = Decimal(value) if '.' in value else int(value)
+            # value, one of VALUE [DOT VALUE] or DOT VALUE.
+            if tokens[0].symbol == 'VALUE' and tokens[1].symbol == 'DOT':
+                value = tokens.popleft()
+                dot = tokens.popleft()
+                if tokens[0].symbol != 'VALUE':
+                    raise RepcodeParseError('Expected VALUE DOT VALUE, got VALUE DOT %s.' % tokens[0].symbol)
+                value2 = tokens.popleft()
+                words[word] = Decimal(sign + value.text + '.' + value2.text)
+            elif tokens[0].symbol == 'DOT' and tokens[1].symbol == 'VALUE':
+                dot = tokens.popleft()        # pop the DOT token
+                value = tokens.popleft()
+                words[word] = Decimal(sign + '.' + value.text)
+            elif tokens[0].symbol == 'VALUE':
+                value = tokens.popleft()
+                words[word] = int(sign + value.text)
+            else:
+                raise RepcodeParseError('Expected VALUE [DOT VALUE] or DOT VALUE tokens, got %s.' % tokens[0].symbol)
         return words
 
     def _tokenize(self, line):
         def is_digit(ch):
-            return ('0' <= ch <= '9') or (ch == '.')
+            return '0' <= ch <= '9'
         pos = 0
         while pos < len(line):
             if line[pos] == ';':
@@ -72,6 +85,10 @@ class repcode(object):
                 continue
             if line[pos] == '+' or line[pos] == '-':
                 yield self.repcode_token('SIGN', line[pos])
+                pos += 1
+                continue
+            if line[pos] == '.':
+                yield self.repcode_token('DOT', line[pos])
                 pos += 1
                 continue
             if is_digit(line[pos]):

@@ -36,13 +36,14 @@ def test_non_az_parameters():
 
 def test_decimal_parse():
     # parser is supposed to keep the full precision, including trailing zeroes
-    block = repcode('G0 X-1.23456 Y+9.870 Z9.870 F1.0')
+    block = repcode('G0 X-1.23456 Y+9.870 Z9.870 E.22 F1.0')
     assert block.G == 0
     assert block.X == Decimal('-1.23456')
     assert block.Y == Decimal('+9.870')
     assert block.Y == block.Z
+    assert block.E == Decimal('0.22')
     assert block.F == Decimal('1.0')
-    assert str(block) == 'G0 X-1.23456 Y9.870 Z9.870 F1.0'
+    assert str(block) == 'G0 X-1.23456 Y9.870 Z9.870 E0.22 F1.0'
 
 def test_without_spaces():
     block = repcode('M113S9.8T-1Q0')
@@ -91,7 +92,19 @@ def test_duplicates():
     with py.test.raises(RepcodeParseError):
         block = repcode('G9 M101 g0 X0 Y0 Z0 F0 E0')
 
-def test_invalid_1():
+def test_invalid_number_1():
+    with py.test.raises(RepcodeParseError):
+        block = repcode('X+.')
+        
+def test_invalid_number_2():
+    with py.test.raises(RepcodeParseError):
+        block = repcode('X-5..600')
+        
+def test_invalid_number_3():
+    with py.test.raises(RepcodeParseError):
+        block = repcode('X.')
+        
+def test_invalid_number_4():
     with py.test.raises(RepcodeParseError):
         block = repcode('X5. Y0 Z0')
 
@@ -110,3 +123,15 @@ def test_invalid_4():
 def test_invalid_chars():
     with py.test.raises(RepcodeParseError):
         block = repcode('G1 X-5 Y:1 Z0')
+
+def test_invalid_symbol_order():
+    with py.test.raises(RepcodeParseError):
+        block = repcode('X5.06-')
+    with py.test.raises(RepcodeParseError):
+        block = repcode('X5.-06')
+    with py.test.raises(RepcodeParseError):
+        block = repcode('+X0')
+    with py.test.raises(RepcodeParseError):
+        block = repcode('0-A1')
+    with py.test.raises(RepcodeParseError):
+        block = repcode('T+.')
