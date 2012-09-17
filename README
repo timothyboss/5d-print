@@ -4,3 +4,14 @@
 Host software (and support libraries) for controlling consumer-grade 3D printers
 such as Makibot and RepRap.
 
+
+
+
+Testing
+-------
+
+To test the 5d-print modules, install py.test [1] and execute:
+
+    $ py.test $MODULE
+
+
