@@ -19,43 +19,36 @@ def parse(line):
     pos = 0
     symbol = namedtuple('symbol', 'code pos text')
     tokens = deque()
-    while pos < len(line):
-        if line[pos] == ';':
+    for pos, ch in enumerate(line):
+        if ch == ';':
             break
-        if line[pos] == ' ':
-            value = line[pos]
-            pos += 1
-            while pos < len(line) and line[pos] == ' ':
-                value += line[pos]
-                pos += 1
-            sym = symbol('WS', pos, value)
+        if ch == ' ':
+            sym = symbol('WS', pos, ch)
+            if tokens and tokens[-1].code == 'WS':
+                sym = tokens.pop()
+                sym = sym._replace(text=sym.text + ch)
             tokens.append(sym)
             continue
-        if ('a' <= line[pos] <= 'z') or ('A' <= line[pos] <= 'Z'):
-            sym = symbol('CODE', pos, line[pos].upper())
+        if ('a' <= ch <= 'z') or ('A' <= ch <= 'Z'):
+            sym = symbol('LETTER', pos, ch.upper())
             tokens.append(sym)
-            pos += 1
             continue
-        if line[pos] == '+' or line[pos] == '-':
-            sym = symbol('SIGN', pos, line[pos])
+        if ch == '+' or ch == '-':
+            sym = symbol('SIGN', pos, ch)
             tokens.append(sym)
-            pos += 1
             continue
-        if line[pos] == '.':
+        if ch == '.':
             sym = symbol('DOT', pos, line[pos])
             tokens.append(sym)
-            pos += 1
             continue
-        if '0' <= line[pos] <= '9':
-            value = line[pos]
-            pos += 1
-            while pos < len(line) and '0' <= line[pos] <= '9':
-                value += line[pos]
-                pos += 1
-            sym = symbol('VALUE', pos, value)
+        if '0' <= ch <= '9':
+            sym = symbol('DIGITS', pos, ch)
+            if tokens and tokens[-1].code == 'DIGITS':
+                sym = tokens.pop()
+                sym = sym._replace(text=sym.text + ch)
             tokens.append(sym)
             continue
-        raise ParseError('Unrecognized character: "{}"'.format(line[pos]))
+        raise ParseError('Unrecognized character: "{}"'.format(ch))
     sym = symbol('EOF', pos, None)
     tokens.append(sym)
     # Parse
@@ -64,8 +57,8 @@ def parse(line):
         if tokens[0].code == 'WS':
             tokens.popleft()
             continue
-        if tokens[0].code != 'CODE':
-            raise ParseError('Expected CODE token, got %s.' % tokens[0].code)
+        if tokens[0].code != 'LETTER':
+            raise ParseError('Expected LETTER token, got %s.' % tokens[0].code)
         word = tokens[0].text
         tokens.popleft()
         if word in words:
@@ -75,23 +68,23 @@ def parse(line):
         if tokens[0].code == 'SIGN':
             sign = tokens[0].text
             tokens.popleft()
-        # value, one of VALUE [DOT VALUE] or DOT VALUE.
-        if tokens[0].code == 'VALUE' and tokens[1].code == 'DOT':
+        # value, one of DIGITS [DOT DIGITS] or DOT DIGITS.
+        if tokens[0].code == 'DIGITS' and tokens[1].code == 'DOT':
             value = tokens.popleft()
             dot = tokens.popleft()
-            if tokens[0].code != 'VALUE':
-                raise ParseError('Expected VALUE DOT VALUE, got VALUE DOT %s.' % tokens[0].code)
+            if tokens[0].code != 'DIGITS':
+                raise ParseError('Expected DIGITS DOT DIGITS, got DIGITS DOT %s.' % tokens[0].code)
             value2 = tokens.popleft()
             words[word] = Decimal(sign + value.text + '.' + value2.text)
-        elif tokens[0].code == 'DOT' and tokens[1].code == 'VALUE':
+        elif tokens[0].code == 'DOT' and tokens[1].code == 'DIGITS':
             dot = tokens.popleft()        # pop the DOT token
             value = tokens.popleft()
             words[word] = Decimal(sign + '.' + value.text)
-        elif tokens[0].code == 'VALUE':
+        elif tokens[0].code == 'DIGITS':
             value = tokens.popleft()
             words[word] = int(sign + value.text)
         else:
-            raise ParseError('Expected VALUE [DOT VALUE] or DOT VALUE tokens, got %s.' % tokens[0].code)
+            raise ParseError('Expected DIGITS [DOT DIGITS] or DOT DIGITS tokens, got %s.' % tokens[0].code)
     return words
 
 
