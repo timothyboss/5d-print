@@ -120,6 +120,11 @@ def test_build():
     words = dict(M=12345, Z=1, Y=Decimal('-6.666'), X=-1)
     assert build(words) == 'M12345 X-1 Y-6.666 Z1'
 
+def test_build_with_comment():
+    words = dict(G=92, X=0, Y=0, Z=0, E=0)
+    output = build(words, comment='Return to home position.')
+    assert output == 'G92 X0 Y0 Z0 E0 ; Return to home position.'
+
 def test_invalid_build():
     with py.test.raises(BuildError):
         output = build(dict(G=1, X=1, Y=Decimal('.1'), Z=1, AA=2))

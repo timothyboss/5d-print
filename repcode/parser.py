@@ -6,6 +6,8 @@ from decimal import Decimal
 from collections import deque, namedtuple
 
 
+# TODO:  pass the input text and error position so we can provide contextual
+#        error reporting.
 class ParseError(Exception):
     pass
 
@@ -88,7 +90,7 @@ def parse(line):
     return words
 
 
-def build(words):
+def build(words, comment=None):
     valid_words = 'GMXYZEFIJ' 'ABCDHKLNOPQRSTUVW'
     output = []
     for word in words.keys():
@@ -104,7 +106,10 @@ def build(words):
             pass
         else:
             raise BuildError('Word "%s" is not a numeric value.' % word)
-    return ' '.join(output) 
+    line = ' '.join(output)
+    if comment:
+        line += ' ; ' + comment
+    return line
 
 
 def tabulate_codes(*paths):
